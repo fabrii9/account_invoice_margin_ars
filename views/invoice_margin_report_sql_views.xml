@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista tree del reporte SQL -->
+    <record id="view_invoice_margin_report_sql_tree" model="ir.ui.view">
+        <field name="name">account.invoice.margin.report.tree</field>
+        <field name="model">account.invoice.margin.report</field>
+        <field name="arch" type="xml">
+            <list string="Reporte de Margen por Factura">
+                <field name="invoice_name" string="Factura"/>
+                <field name="partner_id" string="Cliente"/>
+                <field name="invoice_date" string="Fecha Factura"/>
+                <field name="product_id"/>
+                <field name="product_name" string="Descripción"/>
+                <field name="quantity" sum="Total"/>
+                <field name="price_unit"/>
+                <field name="cost_usd" sum="Total"/>
+                <field name="exchange_rate"/>
+                <field name="revenue_ars" sum="Total"/>
+                <field name="cost_ars" sum="Total"/>
+                <field name="margin_ars" sum="Total"/>
+                <field name="margin_percent" widget="percentage"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Filtros de búsqueda -->
+    <record id="view_invoice_margin_report_sql_search" model="ir.ui.view">
+        <field name="name">account.invoice.margin.report.search</field>
+        <field name="model">account.invoice.margin.report</field>
+        <field name="arch" type="xml">
+            <search string="Reporte de Margen">
+                <field name="invoice_name"/>
+                <field name="partner_id"/>
+                <field name="product_id"/>
+                <filter string="Facturas de Cliente" name="customer_invoices" domain="[('move_id.move_type', 'in', ('out_invoice', 'out_refund'))]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Factura" name="group_by_invoice" context="{'group_by': 'invoice_name'}"/>
+                    <filter string="Cliente" name="group_by_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Producto" name="group_by_product" context="{'group_by': 'product_id'}"/>
+                    <filter string="Fecha" name="group_by_date" context="{'group_by': 'invoice_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action window -->
+    <record id="action_invoice_margin_report_sql" model="ir.actions.act_window">
+        <field name="name">Reporte de Margen por Factura</field>
+        <field name="res_model">account.invoice.margin.report</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_invoice_margin_report_sql_tree"/>
+        <field name="search_view_id" ref="view_invoice_margin_report_sql_search"/>
+        <field name="context">{}</field>
+    </record>
+
+    <!-- Menú: Facturación > Reportes > Reporte de Margen por Factura -->
+    <menuitem
+        id="menu_invoice_margin_report_sql"
+        name="Reporte de Margen por Factura"
+        parent="account.menu_finance_reports"
+        action="action_invoice_margin_report_sql"
+        sequence="50"/>
+</odoo>
