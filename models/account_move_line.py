@@ -7,35 +7,40 @@ class AccountMoveLine(models.Model):
     cost_usd = fields.Float(
         string='Costo USD',
         compute='_compute_margin_fields',
-        store=False,
+        store=True,
+        group_operator='sum',
     )
     exchange_rate = fields.Float(
         string='Tipo de Cambio',
         compute='_compute_margin_fields',
-        store=False,
+        store=True,
+        group_operator='avg',
     )
     revenue_ars = fields.Monetary(
         string='Ingreso ARS',
         currency_field='currency_id',
         compute='_compute_margin_fields',
-        store=False,
+        store=True,
+        group_operator='sum',
     )
     cost_ars = fields.Monetary(
         string='Costo ARS',
         currency_field='currency_id',
         compute='_compute_margin_fields',
-        store=False,
+        store=True,
+        group_operator='sum',
     )
     margin_ars = fields.Monetary(
         string='Ganancia ARS',
         currency_field='currency_id',
         compute='_compute_margin_fields',
-        store=False,
+        store=True,
+        group_operator='sum',
     )
     margin_percent = fields.Float(
         string='Margen %',
         compute='_compute_margin_fields',
-        store=False,
+        store=True,
     )
 
     @api.depends(

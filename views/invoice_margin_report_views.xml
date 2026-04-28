@@ -11,13 +11,13 @@
                 <field name="invoice_date" string="Fecha Factura"/>
                 <field name="product_id"/>
                 <field name="name" string="Descripción"/>
-                <field name="quantity"/>
+                <field name="quantity" sum="Total"/>
                 <field name="price_unit"/>
-                <field name="cost_usd"/>
+                <field name="cost_usd" sum="Total"/>
                 <field name="exchange_rate"/>
-                <field name="revenue_ars"/>
-                <field name="cost_ars"/>
-                <field name="margin_ars"/>
+                <field name="revenue_ars" sum="Total"/>
+                <field name="cost_ars" sum="Total"/>
+                <field name="margin_ars" sum="Total"/>
                 <field name="margin_percent" widget="percentage"/>
             </list>
         </field>
