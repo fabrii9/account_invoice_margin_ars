@@ -39,19 +39,18 @@ class AccountInvoiceMarginReport(models.Model):
                     aml.quantity AS quantity,
                     aml.price_unit AS price_unit,
                     ABS(aml.amount_currency) AS revenue_ars,
-                    COALESCE(pp.standard_price, 0.0) * ABS(aml.quantity) AS cost_usd,
+                    COALESCE((pp.standard_price->>am.company_id::text)::numeric, 0.0) * ABS(aml.quantity) AS cost_usd,
                     COALESCE(am.invoice_currency_rate, 1.0) AS exchange_rate,
-                    (COALESCE(pp.standard_price, 0.0) * ABS(aml.quantity)) * COALESCE(am.invoice_currency_rate, 1.0) AS cost_ars,
-                    ABS(aml.amount_currency) - ((COALESCE(pp.standard_price, 0.0) * ABS(aml.quantity)) * COALESCE(am.invoice_currency_rate, 1.0)) AS margin_ars,
+                    (COALESCE((pp.standard_price->>am.company_id::text)::numeric, 0.0) * ABS(aml.quantity)) * COALESCE(am.invoice_currency_rate, 1.0) AS cost_ars,
+                    ABS(aml.amount_currency) - ((COALESCE((pp.standard_price->>am.company_id::text)::numeric, 0.0) * ABS(aml.quantity)) * COALESCE(am.invoice_currency_rate, 1.0)) AS margin_ars,
                     CASE
                         WHEN ABS(aml.amount_currency) > 0
-                        THEN (ABS(aml.amount_currency) - ((COALESCE(pp.standard_price, 0.0) * ABS(aml.quantity)) * COALESCE(am.invoice_currency_rate, 1.0))) / ABS(aml.amount_currency)
+                        THEN (ABS(aml.amount_currency) - ((COALESCE((pp.standard_price->>am.company_id::text)::numeric, 0.0) * ABS(aml.quantity)) * COALESCE(am.invoice_currency_rate, 1.0))) / ABS(aml.amount_currency)
                         ELSE 0.0
                     END AS margin_percent
                 FROM account_move_line aml
                 JOIN account_move am ON am.id = aml.move_id
                 LEFT JOIN product_product pp ON pp.id = aml.product_id
-                LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
                 WHERE am.move_type IN ('out_invoice', 'out_refund')
                   AND aml.display_type = 'product'
             )
