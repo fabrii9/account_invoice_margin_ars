@@ -39,13 +39,13 @@ class AccountInvoiceMarginReport(models.Model):
                     aml.quantity AS quantity,
                     aml.price_unit AS price_unit,
                     ABS(aml.amount_currency) AS revenue_ars,
-                    COALESCE(pt.standard_price, 0.0) * ABS(aml.quantity) AS cost_usd,
+                    COALESCE(pp.standard_price, 0.0) * ABS(aml.quantity) AS cost_usd,
                     COALESCE(am.invoice_currency_rate, 1.0) AS exchange_rate,
-                    (COALESCE(pt.standard_price, 0.0) * ABS(aml.quantity)) * COALESCE(am.invoice_currency_rate, 1.0) AS cost_ars,
-                    ABS(aml.amount_currency) - ((COALESCE(pt.standard_price, 0.0) * ABS(aml.quantity)) * COALESCE(am.invoice_currency_rate, 1.0)) AS margin_ars,
+                    (COALESCE(pp.standard_price, 0.0) * ABS(aml.quantity)) * COALESCE(am.invoice_currency_rate, 1.0) AS cost_ars,
+                    ABS(aml.amount_currency) - ((COALESCE(pp.standard_price, 0.0) * ABS(aml.quantity)) * COALESCE(am.invoice_currency_rate, 1.0)) AS margin_ars,
                     CASE
                         WHEN ABS(aml.amount_currency) > 0
-                        THEN (ABS(aml.amount_currency) - ((COALESCE(pt.standard_price, 0.0) * ABS(aml.quantity)) * COALESCE(am.invoice_currency_rate, 1.0))) / ABS(aml.amount_currency)
+                        THEN (ABS(aml.amount_currency) - ((COALESCE(pp.standard_price, 0.0) * ABS(aml.quantity)) * COALESCE(am.invoice_currency_rate, 1.0))) / ABS(aml.amount_currency)
                         ELSE 0.0
                     END AS margin_percent
                 FROM account_move_line aml
