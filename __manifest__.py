@@ -12,6 +12,7 @@
     'depends': ['account'],
     'data': [
         'views/account_move_views.xml',
+        'views/invoice_margin_report_views.xml',
     ],
     'installable': True,
     'application': False,
