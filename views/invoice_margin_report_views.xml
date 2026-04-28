@@ -6,8 +6,7 @@
         <field name="model">account.move.line</field>
         <field name="arch" type="xml">
             <list string="Reporte de Margen por Línea de Factura">
-                <button name="action_open_invoice" type="object" icon="fa-external-link" title="Ver Factura" width="32px"/>
-                <field name="move_id" string="Factura"/>
+                <field name="move_id" string="Factura" widget="many2one" options="{'no_open': False}"/>
                 <field name="partner_id" string="Cliente"/>
                 <field name="invoice_date" string="Fecha Factura"/>
                 <field name="product_id"/>
