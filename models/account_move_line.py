@@ -111,3 +111,15 @@ class AccountMoveLine(models.Model):
             else:
                 line.margin_ars = 0.0
                 line.margin_percent = 0.0
+
+    def action_open_invoice(self):
+        """Abre la factura relacionada desde el reporte de margen."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'res_id': self.move_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+            'context': {'create': False},
+        }
