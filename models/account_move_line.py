@@ -48,14 +48,10 @@ class AccountMoveLine(models.Model):
         'quantity',
         'amount_currency',
         'currency_id',
-        'move_id.invoice_date',
-        'move_id.date',
+        'move_id.invoice_currency_rate',
         'company_id',
     )
     def _compute_margin_fields(self):
-        usd_currency = self.env.ref('base.USD', raise_if_not_found=False)
-        ars_currency = self.env['res.currency'].search([('name', '=', 'ARS')], limit=1)
-
         for line in self:
             # Solo calcular para líneas de producto en facturas de cliente
             if (
@@ -76,26 +72,30 @@ class AccountMoveLine(models.Model):
             cost_usd_total = cost_usd_unit * abs(line.quantity)
             line.cost_usd = cost_usd_total
 
-            # Fecha para obtener el tipo de cambio
-            move_date = line.move_id.invoice_date or line.move_id.date or fields.Date.today()
-            company = line.company_id
+            # Tomamos el tipo de cambio de la factura
+            invoice_rate = line.move_id.invoice_currency_rate or 0.0
 
-            # Convertir costo USD a ARS
-            if usd_currency and ars_currency and company:
-                cost_ars = usd_currency._convert(
-                    cost_usd_total,
-                    ars_currency,
-                    company,
-                    move_date,
-                )
-                # Calculamos el tipo de cambio usado (ARS / USD)
-                if cost_usd_total:
-                    line.exchange_rate = cost_ars / cost_usd_total
+            # Fallback: si la factura no tiene tipo de cambio, buscamos en monedas
+            if not invoice_rate:
+                usd_currency = self.env.ref('base.USD', raise_if_not_found=False)
+                ars_currency = self.env['res.currency'].search([('name', '=', 'ARS')], limit=1)
+                company = line.company_id
+                move_date = line.move_id.invoice_date or line.move_id.date or fields.Date.today()
+                if usd_currency and ars_currency and company:
+                    cost_ars = usd_currency._convert(
+                        cost_usd_total,
+                        ars_currency,
+                        company,
+                        move_date,
+                    )
+                    line.exchange_rate = cost_ars / cost_usd_total if cost_usd_total else 0.0
                 else:
-                    line.exchange_rate = 0.0
+                    cost_ars = cost_usd_total
+                    line.exchange_rate = 1.0
             else:
-                cost_ars = cost_usd_total
-                line.exchange_rate = 1.0
+                # Convertimos costo USD a ARS usando el tipo de cambio de la factura
+                cost_ars = cost_usd_total * invoice_rate
+                line.exchange_rate = invoice_rate
 
             line.cost_ars = cost_ars
 
