@@ -12,10 +12,9 @@ class AccountMoveLine(models.Model):
     )
     exchange_rate = fields.Float(
         string='Tipo de Cambio',
-        related='move_id.invoice_currency_rate',
+        compute='_compute_exchange_rate',
         store=True,
         group_operator='avg',
-        readonly=True,
     )
     revenue_ars = fields.Monetary(
         string='Ingreso ARS',
@@ -43,6 +42,11 @@ class AccountMoveLine(models.Model):
         compute='_compute_margin_fields',
         store=True,
     )
+
+    @api.depends('move_id.invoice_currency_rate')
+    def _compute_exchange_rate(self):
+        for line in self:
+            line.exchange_rate = line.move_id.invoice_currency_rate or 0.0
 
     @api.depends(
         'product_id',
