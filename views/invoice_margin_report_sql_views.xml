@@ -45,7 +45,7 @@
 
     <!-- Action window -->
     <record id="action_invoice_margin_report_sql" model="ir.actions.act_window">
-        <field name="name">Reporte de Margen por Factura</field>
+        <field name="name">Reporte de Margen por Factura (SQL)</field>
         <field name="res_model">account.invoice.margin.report</field>
         <field name="view_mode">list</field>
         <field name="view_id" ref="view_invoice_margin_report_sql_tree"/>
@@ -56,7 +56,7 @@
     <!-- Menú: Facturación > Reportes > Reporte de Margen por Factura -->
     <menuitem
         id="menu_invoice_margin_report_sql"
-        name="Reporte de Margen por Factura"
+        name="Reporte de Margen por Factura (SQL)"
         parent="account.menu_finance_reports"
         action="action_invoice_margin_report_sql"
         sequence="50"/>
