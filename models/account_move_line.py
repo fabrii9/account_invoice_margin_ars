@@ -71,9 +71,12 @@ class AccountMoveLine(models.Model):
                 line.margin_percent = 0.0
                 continue
 
+            # Signo: las notas de crédito deben restar del total
+            sign = -1 if line.move_id.move_type == 'out_refund' else 1
+
             # Costo en USD (standard_price está en USD porque la compañía es USD)
             cost_usd_unit = line.product_id.standard_price or 0.0
-            cost_usd_total = cost_usd_unit * abs(line.quantity)
+            cost_usd_total = cost_usd_unit * abs(line.quantity) * sign
             line.cost_usd = cost_usd_total
 
             # Tomamos el tipo de cambio de la factura (siempre sincronizado via related)
@@ -102,13 +105,13 @@ class AccountMoveLine(models.Model):
 
             # Ingreso en ARS: amount_currency está en la moneda del documento (ARS)
             # Para facturas de cliente amount_currency es negativo, tomamos abs
-            revenue_ars = abs(line.amount_currency) if line.amount_currency else 0.0
+            revenue_ars = abs(line.amount_currency) * sign if line.amount_currency else 0.0
             line.revenue_ars = revenue_ars
 
             if revenue_ars:
                 margin = revenue_ars - cost_ars
                 line.margin_ars = margin
-                line.margin_percent = margin / revenue_ars  # Fracción 0-1 para widget percentage
+                line.margin_percent = margin / abs(revenue_ars)  # Fracción -1 a 1 para widget percentage
             else:
                 line.margin_ars = 0.0
                 line.margin_percent = 0.0

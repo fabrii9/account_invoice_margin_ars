@@ -27,31 +27,49 @@ class AccountInvoiceMarginReport(models.Model):
         tools.drop_view_if_exists(self._cr, self._table)
         self._cr.execute("""
             CREATE OR REPLACE VIEW %s AS (
+                WITH line_data AS (
+                    SELECT
+                        aml.id AS id,
+                        aml.id AS move_line_id,
+                        am.id AS move_id,
+                        am.name AS invoice_name,
+                        am.invoice_date AS invoice_date,
+                        aml.partner_id AS partner_id,
+                        aml.product_id AS product_id,
+                        aml.name AS product_name,
+                        aml.quantity AS quantity,
+                        aml.price_unit AS price_unit,
+                        ABS(aml.amount_currency) AS abs_revenue,
+                        COALESCE((pp.standard_price->>am.company_id::text)::numeric, 0.0) * ABS(aml.quantity) AS abs_cost_usd,
+                        COALESCE(am.invoice_currency_rate, 1.0) AS exchange_rate,
+                        CASE WHEN am.move_type = 'out_refund' THEN -1 ELSE 1 END AS sign
+                    FROM account_move_line aml
+                    JOIN account_move am ON am.id = aml.move_id
+                    LEFT JOIN product_product pp ON pp.id = aml.product_id
+                    WHERE am.move_type IN ('out_invoice', 'out_refund')
+                      AND aml.display_type = 'product'
+                )
                 SELECT
-                    aml.id AS id,
-                    aml.id AS move_line_id,
-                    am.id AS move_id,
-                    am.name AS invoice_name,
-                    am.invoice_date AS invoice_date,
-                    aml.partner_id AS partner_id,
-                    aml.product_id AS product_id,
-                    aml.name AS product_name,
-                    aml.quantity AS quantity,
-                    aml.price_unit AS price_unit,
-                    ABS(aml.amount_currency) AS revenue_ars,
-                    COALESCE((pp.standard_price->>am.company_id::text)::numeric, 0.0) * ABS(aml.quantity) AS cost_usd,
-                    COALESCE(am.invoice_currency_rate, 1.0) AS exchange_rate,
-                    (COALESCE((pp.standard_price->>am.company_id::text)::numeric, 0.0) * ABS(aml.quantity)) * COALESCE(am.invoice_currency_rate, 1.0) AS cost_ars,
-                    ABS(aml.amount_currency) - ((COALESCE((pp.standard_price->>am.company_id::text)::numeric, 0.0) * ABS(aml.quantity)) * COALESCE(am.invoice_currency_rate, 1.0)) AS margin_ars,
+                    id,
+                    move_line_id,
+                    move_id,
+                    invoice_name,
+                    invoice_date,
+                    partner_id,
+                    product_id,
+                    product_name,
+                    quantity,
+                    price_unit,
+                    abs_revenue * sign AS revenue_ars,
+                    abs_cost_usd * sign AS cost_usd,
+                    exchange_rate,
+                    (abs_cost_usd * exchange_rate) * sign AS cost_ars,
+                    (abs_revenue * sign) - ((abs_cost_usd * exchange_rate) * sign) AS margin_ars,
                     CASE
-                        WHEN ABS(aml.amount_currency) > 0
-                        THEN (ABS(aml.amount_currency) - ((COALESCE((pp.standard_price->>am.company_id::text)::numeric, 0.0) * ABS(aml.quantity)) * COALESCE(am.invoice_currency_rate, 1.0))) / ABS(aml.amount_currency)
+                        WHEN abs_revenue > 0
+                        THEN ((abs_revenue * sign) - ((abs_cost_usd * exchange_rate) * sign)) / abs_revenue
                         ELSE 0.0
                     END AS margin_percent
-                FROM account_move_line aml
-                JOIN account_move am ON am.id = aml.move_id
-                LEFT JOIN product_product pp ON pp.id = aml.product_id
-                WHERE am.move_type IN ('out_invoice', 'out_refund')
-                  AND aml.display_type = 'product'
+                FROM line_data
             )
         """ % (self._table,))
