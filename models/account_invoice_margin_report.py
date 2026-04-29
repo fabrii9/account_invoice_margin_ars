@@ -48,6 +48,7 @@ class AccountInvoiceMarginReport(models.Model):
                     LEFT JOIN product_product pp ON pp.id = aml.product_id
                     WHERE am.move_type IN ('out_invoice', 'out_refund')
                       AND aml.display_type = 'product'
+                      AND am.state = 'posted'
                 )
                 SELECT
                     id,
